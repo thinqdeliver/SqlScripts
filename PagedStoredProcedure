@@ -1,0 +1,29 @@
+CREATE PROCEDURE <PROCNAME>
+(
+	@Page int,
+	@PageSize int
+)
+AS
+BEGIN
+
+-- https://www.mssqltips.com/sqlservertip/1699/sql-server-stored-procedures-to-page-large-tables-or-queries/
+	
+	-- Determine the first record and last record 
+	DECLARE @FirstRec int, @LastRec int
+
+	SELECT @FirstRec = (@Page - 1) * @PageSize
+	SELECT @LastRec = (@Page * @PageSize + 1);
+
+	WITH TempResult AS
+	(
+		SELECT	ROW_NUMBER() OVER(ORDER BY Timeutc DESC) AS [RowNum], * 
+		FROM	<Table> with (nolock) 		
+	)
+
+	SELECT top (@LastRec-1) *
+	FROM TempResult
+	WHERE RowNum > @FirstRec 
+	AND RowNum < @LastRec
+
+
+END
